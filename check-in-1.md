@@ -12,8 +12,11 @@ In this project, we attempt to implement the model proposed by the paper ‘Phot
 
 ##### Datasets:
 *ImageNet Dataset*: *https://www.image-net.org/index.php*
+
 *BSD 100 Dataset*: *https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/*
+
 *Set 5 and Set 14 Dataset*: *https://github.com/ChaofWang/Awesome-Super-Resolution/blob/master/dataset.md*
+
 *RAISE Dataset*: *http://loki.disi.unitn.it/RAISE/*
 
 
@@ -155,11 +158,12 @@ We have identified the following aspects of this project:
 * Content Loss
 * Adversarial Loss
 5. Experimentation and Results - Prashanthi and Rugved
-6. Report and Version Control - Aditya and Shashi
+6. Report and Version Control - Aditya and Shashidhar
 
 ## Existing implementations
 
 *https://github.com/leftthomas/SRGAN*
+
 *https://github.com/AvivSham/SRGAN-Keras-Implementation*
 
 
