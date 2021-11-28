@@ -10,7 +10,7 @@ class Discriminator:
 	def __init__(self,input_shape):
 		self.input_shape = input_shape
 
-	def make_discriminator_model():
+	def build_discriminator(self):
 		model = Sequential()
 		model.add(layers.Conv2D(64, (3, 3), strides=(1, 1), padding='same',
 										input_shape=self.input_shape))
@@ -60,3 +60,8 @@ class Discriminator:
 		model.add(layers.Dense(1,activation='sigmoid'))
 
 		return model
+
+	def loss_function(self,logits_fake: tf.Tensor, logits_real: tf.Tensor) -> tf.Tensor:
+		D_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.zeros_like(logits_fake), logits=logits_fake))
+		D_loss += tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(logits_real), logits=logits_real))
+		return D_loss
