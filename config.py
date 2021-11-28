@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 class Config:
-	data_dir = '/home/prashanthi/Brown/DL/final-project/viVID/images/'
+	data_dir = '/Users/rugvedmavidipalli/Downloads/archive/pokemon_jpg'
 	epochs = 5
 	batch_size = 16
 	learning_rate = 1e-3
