@@ -24,15 +24,15 @@ class SRGAN:
 
         d_model = discriminator.build_discriminator()
         g_model = generator.build_generator()
-
+        print(f"{'---'*20}Train Started{'---'*20}")
         for i in range(0, len(HR_image), self.batch_size):
             LR_batch = LR_image[i:i + self.batch_size]
             HR_batch = HR_image[i:i + self.batch_size]
 
             with tf.GradientTape(persistent=True) as tape:
-                generated_sample = g_model(LR_image)
+                generated_sample = g_model(LR_batch)
 
-                logits_real = d_model(HR_image)
+                logits_real = d_model(HR_batch)
                 logits_fake = d_model(generated_sample)
 
                 g_loss = g_model.loss_function(fake_imgs=generated_sample, real_imgs=HR_image, logits_fake=logits_fake,

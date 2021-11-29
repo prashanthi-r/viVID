@@ -12,6 +12,8 @@ class Generator:
     def __init__(self, input_shape):
         self.input_shape = input_shape
         self.number_of_residual_blocks = 16
+    # def __init__(self):
+    #     self.number_of_residual_blocks = 16
 
     def build_residual_block(self, residual_block_input):
         """
@@ -34,6 +36,7 @@ class Generator:
 
     def build_generator(self):
         input_image = Input(shape=self.input_shape)
+        # print(f"made it till here -- ! checking for shape of input_image{input_image.shape}") 
         pre_residual_block = Sequential(
             [
                 Conv2D(64, kernel_size=(9, 9), strides=(1, 1), padding='same'),
@@ -41,9 +44,11 @@ class Generator:
             ]
         )
         low_res_image = pre_residual_block(input_image)
+        # print(f"made it till here -- ! checking for shape of low_res_image{low_res_image.shape}") 
         residual_block = self.build_residual_block(residual_block_input=low_res_image)
         for r_block in range(0, self.number_of_residual_blocks - 1):
             residual_block = self.build_residual_block(residual_block)
+        # print(f"made it till here -- ! checking for shape of residual_block{residual_block.shape}")    
         # Post residual blocks
         post_residual_block = Sequential([
             Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same'),
@@ -51,12 +56,15 @@ class Generator:
         ])
         post_concat_layer = Add()([post_residual_block(residual_block), low_res_image])
         # Upsampling
+
+        print(f"made it till here -- ! checking for shape of post_concat_layer{post_concat_layer.shape}")
         upsampling_output = self.build_upsampling_block(post_concat_layer)
         # Final Layer
         final_layer = Sequential([
             Conv2D(3, kernel_size=(9, 9), strides=(1, 1), padding='same', activation='tanh')
         ])
         return Model(input_image, final_layer(upsampling_output))
+        # return final_layer(upsampling_output)
 
     def loss_function(self, fake_imgs: tf.Tensor, real_imgs: tf.Tensor, logits_fake: tf.Tensor, logits_real: tf.Tensor,
                       i=5, j=4) -> tf.Tensor:
