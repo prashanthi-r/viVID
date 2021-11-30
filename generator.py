@@ -12,6 +12,7 @@ class Generator:
     def __init__(self, input_shape):
         self.input_shape = input_shape
         self.number_of_residual_blocks = 16
+        #self.model = VGG19(weights='imagenet')
 
     def SubpixelConv2D(self, scale):
         return Lambda(lambda x: tf.nn.depth_to_space(x, scale))
@@ -54,10 +55,9 @@ class Generator:
 
     def loss_function(self, fake_imgs: tf.Tensor, real_imgs: tf.Tensor, logits_fake: tf.Tensor, logits_real: tf.Tensor,
                       i=5, j=4) -> tf.Tensor:
-        model = VGG19(weights='imagenet')
-        model = backend.function([model.layers[0].input], [model.layers[i * j].output])
-        vgg_input_features = model(real_imgs)[0]
-        vgg_target_features = model(fake_imgs)[0]
+        self.model = backend.function([self.model.layers[0].input], [self.model.layers[i * j].output])
+        vgg_input_features = self.model(real_imgs)[0]
+        vgg_target_features = self.model(fake_imgs)[0]
 
         content_loss = mse(vgg_input_features, vgg_target_features)
         adversarial_loss = 1e-3 * tf.reduce_mean(

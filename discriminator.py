@@ -1,8 +1,8 @@
 import numpy as np
 import os
 import PIL
-from tensorflow.keras import layers, Sequential
 import tensorflow as tf
+from tensorflow.keras import layers, Sequential
 import time
 
 class Discriminator:
@@ -51,13 +51,10 @@ class Discriminator:
 		model.add(layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001))
 		model.add(layers.LeakyReLU())
 
-
-		model.add(layers.Flatten())
-
 		model.add(layers.Dense(1024))
 		model.add(layers.LeakyReLU())
-
 		model.add(layers.Dense(1,activation='sigmoid'))
+
 
 		return model
 

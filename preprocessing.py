@@ -52,9 +52,9 @@ def get_data(data_dir, scale):
 		img_lr = resize(img, (low_res_h,low_res_w),preserve_range=True)
 		# print(np.min(img_lr),np.max(img_lr))
 		
-		normalization_layer_hr = tf.keras.layers.Rescaling(1./127.5, offset=-1)
+		normalization_layer_hr = tf.keras.layers.experimental.preprocessing.Rescaling(1./127.5, offset=-1)
 		normal_img_hr = normalization_layer_hr(img)
-		normalization_layer_lr = tf.keras.layers.Rescaling(1./255)
+		normalization_layer_lr = tf.keras.layers.experimental.preprocessing.Rescaling(1./255)
 		normal_img_lr = normalization_layer_lr(img_lr)
 
 		lr_images.append(img_lr)
@@ -63,7 +63,7 @@ def get_data(data_dir, scale):
 		normal_hr_images.append(normal_img_hr)
 	print(len(normal_lr_images))
 	print(len(normal_hr_images))
-	return normal_lr_images, normal_hr_images
+	return np.array(normal_lr_images), np.array(normal_hr_images)
 
 def preprocessing_demo(data_dir, scale ,demo_size):
 	print(f"{'---'*10} DEMO {'---'*10}")

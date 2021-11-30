@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 class Config:
-    data_dir = '/Users/rugvedmavidipalli/Downloads/archive/pokemon_jpg'
+    data_dir = '/Users/adidot/Downloads/archive/pokemon_jpg/'
     epochs = 5
     scale = 4
     batch_size = 16
@@ -13,6 +13,6 @@ class Config:
     image_height = 256
     image_width = 256
     input_shape = (batch_size, image_height, image_width, num_channels)
-    input_shape_lr = (image_height // scale, image_width // scale, num_channels)
+    input_shape_lr = (batch_size,image_height // scale, image_width // scale, num_channels)
     input_shape_hr = (image_height, image_width, num_channels)
     optimizer = tf.keras.optimizers.Adam(learning_rate)
