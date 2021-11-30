@@ -26,7 +26,7 @@ def save_image(path, im):
 		return io.imsave(path, img_as_ubyte(im.copy()))
 
 def get_data(data_dir, scale):
-	print(f"{'---'*10} GETTING DATA {'---'*10}")
+	print(f"{'---'*10} STARTING PREPROCESSING {'---'*10}")
 	lr_images =[]
 	hr_images = []
 	normal_lr_images = []
@@ -61,8 +61,7 @@ def get_data(data_dir, scale):
 		hr_images.append(img)
 		normal_lr_images.append(normal_img_lr)
 		normal_hr_images.append(normal_img_hr)
-	print(len(normal_lr_images))
-	print(len(normal_hr_images))
+	print(f"{'---' * 10} COMPLETED PREPROCESSING {'---' * 10}")
 	return normal_lr_images, normal_hr_images
 
 def preprocessing_demo(data_dir, scale ,demo_size):

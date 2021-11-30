@@ -49,7 +49,6 @@ class Generator:
         for upsample_block in range(int(2 - 1)):
             upsample_layer = self.build_upsampling_block(upsample_layer)
         final_output = Conv2D(3, kernel_size=9, strides=1, padding='same', activation='tanh')(upsample_layer)
-        print("generator_complete")
         return Model(input_image, final_output)
 
     def loss_function(self, fake_imgs: tf.Tensor, real_imgs: tf.Tensor, logits_fake: tf.Tensor, logits_real: tf.Tensor,
