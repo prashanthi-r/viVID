@@ -13,6 +13,9 @@ class Generator:
         self.input_shape = input_shape
         self.number_of_residual_blocks = 16
 
+    def SubpixelConv2D(self, scale):
+        return Lambda(lambda x: tf.nn.depth_to_space(x, scale))
+
     def build_residual_block(self, residual_block_input):
         """
         This is the residual block
@@ -28,8 +31,8 @@ class Generator:
         """
         This is the upsampling block
         """
-        output = UpSampling2D(size=2)(upsampling_input)
-        output = Conv2D(filters=256, kernel_size=3, padding='same')(output)
+        output = Conv2D(filters=256, kernel_size=3, padding='same')(upsampling_input)
+        output = self.SubpixelConv2D(2)(output)
         return PReLU()(output)
 
     def build_generator(self):
@@ -43,9 +46,9 @@ class Generator:
         post_residual = BatchNormalization(momentum=0.8)(post_residual)
         post_residual = Add()([post_residual, pre_residual_block])
         upsample_layer = self.build_upsampling_block(upsampling_input=post_residual)
-        for upsample_block in range(int(conf.rescaling_factor // 2 - 1)):
+        for upsample_block in range(int(2 - 1)):
             upsample_layer = self.build_upsampling_block(upsample_layer)
-        final_output = Conv2D(3, kernel_size=9, strides=9, padding='same', activation='tanh')(upsample_layer)
+        final_output = Conv2D(3, kernel_size=9, strides=1, padding='same', activation='tanh')(upsample_layer)
         print("generator_complete")
         return Model(input_image, final_output)
 

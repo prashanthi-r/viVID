@@ -20,7 +20,7 @@ class SRGAN:
 
     def train(self, LR_image, HR_image):
         discriminator = Discriminator(self.input_shape)
-        generator = Generator(self.input_shape_lr)
+        generator = Generator(self.input_shape_lr) # Does not support batches
 
         d_model = discriminator.build_discriminator()
         # TODO change the loss

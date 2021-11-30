@@ -14,4 +14,5 @@ class Config:
     image_width = 256
     input_shape = (batch_size, image_height, image_width, num_channels)
     input_shape_lr = (image_height // scale, image_width // scale, num_channels)
+    input_shape_hr = (image_height, image_width, num_channels)
     optimizer = tf.keras.optimizers.Adam(learning_rate)
