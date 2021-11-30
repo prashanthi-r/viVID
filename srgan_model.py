@@ -47,13 +47,13 @@ class SRGANMODEL:
     def build_and_compile_discriminator(self):
         # TODO Change back to our implimentation using this just to test rest of the code
         # TODO Change back to our implimentation the bellow code will essentially work if we use our implimentation
-        # discriminator = Discriminator(self.high_resolution_shape)
-        # self.discriminator = discriminator.build_discriminator()
-        # self.discriminator.compile(
-        #     loss=['binary_crossentropy'],
-        #     optimizer=tf.keras.optimizers.Adam(self.learning_rate_generator, 0.9),
-        #     metrics=['accuracy']
-        # )
+        discriminator = Discriminator(self.high_resolution_shape)
+        self.discriminator = discriminator.build_discriminator()
+        self.discriminator.compile(
+            loss=['binary_crossentropy'],
+            optimizer=tf.keras.optimizers.Adam(self.learning_rate_generator, 0.9),
+            metrics=['accuracy']
+        )
 
     def build_and_compile_vgg(self):
         vgg = VGG19(input_shape=(None, None, 3), include_top=False)
