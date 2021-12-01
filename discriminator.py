@@ -3,6 +3,7 @@ import os
 import PIL
 import tensorflow as tf
 from tensorflow.keras import layers, Sequential
+from tensorflow.keras.layers import Flatten
 import time
 
 class Discriminator:
@@ -51,6 +52,7 @@ class Discriminator:
 		model.add(layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001))
 		model.add(layers.LeakyReLU())
 
+		model.add(Flatten())
 		model.add(layers.Dense(1024))
 		model.add(layers.LeakyReLU())
 		model.add(layers.Dense(1,activation='sigmoid'))

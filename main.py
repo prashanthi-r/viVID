@@ -2,8 +2,10 @@ from config import Config as conf
 from preprocessing import get_data
 from discriminator import Discriminator
 from generator import Generator
+from tensorflow.keras import Input
 import tensorflow as tf
 from tensorflow import keras
+from tensorflow.keras.applications.vgg19 import VGG19
 from tensorflow.keras.layers import Input
 
 class SRGAN:
@@ -20,14 +22,13 @@ class SRGAN:
 
     def train(self, LR_image, HR_image):
         discriminator = Discriminator(self.input_shape)
-        generator = Generator(self.input_shape_lr) # Does not support batches
+        generator = Generator(input_shape = self.input_shape_lr, model = VGG19(weights='imagenet',include_top=False,
+	input_tensor=Input(shape=(256, 256, 3))), phi_i=4,phi_j=5) # Does not support batches
 
         d_model = discriminator.build_discriminator()
         # TODO change the loss
         g_model = generator.build_generator()
-        print(g_model.summary())
-
-        '''for i in range(0, len(HR_image), self.batch_size):
+        for i in range(0, len(HR_image), self.batch_size):
             LR_batch = LR_image[i:i + self.batch_size]
             HR_batch = HR_image[i:i + self.batch_size]
             with tf.GradientTape(persistent=True) as tape:
@@ -36,9 +37,10 @@ class SRGAN:
                 logits_real = d_model(HR_batch)
                 logits_fake = d_model(generated_sample)
         
-                g_loss = g_model.loss_function(fake_imgs=generated_sample, real_imgs=HR_image, logits_fake=logits_fake,
-                                               logits_real=logits_real, i=5, j=4)
+                g_loss = generator.loss_function(fake_imgs=generated_sample, real_imgs=HR_batch, logits_fake=logits_fake,
+                                               logits_real=logits_real)
                 print("Generator Loss:) :", g_loss)
+                '''
                 d_loss = d_model.loss_function(logits_fake=logits_fake, logits_real=logits_real)
                 print("Discriminator Loss:) :", d_loss)
                 print("Wow, we really got here :)")
