@@ -39,19 +39,16 @@ class SRGAN:
         
                 g_loss = generator.loss_function(fake_imgs=generated_sample, real_imgs=HR_batch, logits_fake=logits_fake,
                                                logits_real=logits_real)
-                print("Generator Loss:) :", g_loss)
-                '''
-                d_loss = d_model.loss_function(logits_fake=logits_fake, logits_real=logits_real)
-                print("Discriminator Loss:) :", d_loss)
-                print("Wow, we really got here :)")
-        
+                print("Generator Loss :", g_loss)
+                d_loss = discriminator.loss_function(logits_fake=logits_fake, logits_real=logits_real)
+                print("Discriminator Loss :", d_loss)
             g_grad = tape.gradient(g_loss, g_model.trainable_variables)
             self.optimizer.apply_gradients(zip(g_grad, g_model.trainable_variables))
         
             d_grad = tape.gradient(d_loss, d_model.trainable_variables)
             self.optimizer.apply_gradients(zip(d_grad, d_model.trainable_variables))
         
-        return g_loss, d_loss'''
+        return g_loss, d_loss
 
 
 # def test():
