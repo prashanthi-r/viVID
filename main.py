@@ -5,50 +5,83 @@ from generator import Generator
 from tensorflow.keras import Input
 import tensorflow as tf
 from tensorflow import keras
+from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.applications.vgg19 import VGG19
+from tensorflow.keras.applications.vgg19 import preprocess_input
 from tensorflow.keras.layers import Input
+import logging
+from tensorflow.keras.losses import BinaryCrossentropy
+from tensorflow.keras.losses import MeanSquaredError
+from loss import Loss
+import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('SRGAN')
+
 
 class SRGAN:
 
     def __init__(self):
+        self.dataset = ""
+        self.dataset_directory = conf.data_dir
+        self.scalling_factor = conf.scale
+        self.low_resoloution_images, self.high_resolution_images = self.preprocess()
         self.input_shape = conf.input_shape
         self.input_shape_lr = conf.input_shape_lr
         self.batch_size = conf.batch_size
         self.learning_rate = conf.learning_rate
         self.optimizer = conf.optimizer
+        self.generator_optimizer = conf.optimizer
+        self.discriminator_optimizer = conf.optimizer
+        generator = Generator(input_shape=self.input_shape_lr)
+        self.generator = generator.build_generator()
+        discriminator = Discriminator(self.input_shape)
+        self.discriminator = discriminator.build_discriminator()
+        self.loss = Loss()
+        self.epochs = conf.epochs
 
     def preprocess(self):
-        return get_data(conf.data_dir, conf.scale)
+        return get_data(self.dataset_directory, self.scalling_factor)
 
-    def train(self, LR_image, HR_image):
-        discriminator = Discriminator(self.input_shape)
-        generator = Generator(input_shape = self.input_shape_lr, model = VGG19(weights='imagenet',include_top=False,
-	input_tensor=Input(shape=(256, 256, 3))), phi_i=4,phi_j=5) # Does not support batches
+    def train(self):
+        logger.info(f"{'---' * 30} STARTING TRAINING {'---' * 30}")
+        for epoch in range(0, self.epochs):
+            logger.info(f"{'---' * 30} EPOCH : {epoch} {'---' * 30}")
+            number_of_batches = 0
+            for batch in range(0, len(self.high_resolution_images), self.batch_size):
+                low_res_batch = self.low_resoloution_images[batch:batch + self.batch_size]
+                high_res_batch = self.high_resolution_images[batch:batch + self.batch_size]
+                with tf.GradientTape() as generator_tape, tf.GradientTape() as discriminator_tape:
+                    generated_samples = self.generator(low_res_batch, training=True)
+                    logits_real = self.discriminator(high_res_batch, training=True)
+                    logits_fake = self.discriminator(generated_samples, training=True)
+                    content_loss = self.loss.content_loss(real=high_res_batch, fake=generated_samples)
+                    generator_loss = self.loss.generator_loss(fake=logits_fake)
+                    perceptual_loss = self.loss.perceptual_loss(content_loss=content_loss,
+                                                                generator_loss=generator_loss)
+                    discriminator_loss = self.loss.discriminator_loss(real=logits_real, fake=logits_fake)
+                    number_of_batches += 1
+                    logger.info(
+                        f"BATCH: {number_of_batches} | PERCEPUTAL LOSS: {perceptual_loss} | DISCRIMINATOR LOSS: {discriminator_loss}")
 
-        d_model = discriminator.build_discriminator()
-        # TODO change the loss
-        g_model = generator.build_generator()
-        for i in range(0, len(HR_image), self.batch_size):
-            LR_batch = LR_image[i:i + self.batch_size]
-            HR_batch = HR_image[i:i + self.batch_size]
-            with tf.GradientTape(persistent=True) as tape:
-                generated_sample = g_model(LR_batch)
-        
-                logits_real = d_model(HR_batch)
-                logits_fake = d_model(generated_sample)
-        
-                g_loss = generator.loss_function(fake_imgs=generated_sample, real_imgs=HR_batch, logits_fake=logits_fake,
-                                               logits_real=logits_real)
-                print("Generator Loss :", g_loss)
-                d_loss = discriminator.loss_function(logits_fake=logits_fake, logits_real=logits_real)
-                print("Discriminator Loss :", d_loss)
-            g_grad = tape.gradient(g_loss, g_model.trainable_variables)
-            self.optimizer.apply_gradients(zip(g_grad, g_model.trainable_variables))
-        
-            d_grad = tape.gradient(d_loss, d_model.trainable_variables)
-            self.optimizer.apply_gradients(zip(d_grad, d_model.trainable_variables))
-        
-        return g_loss, d_loss
+                generator_gradients = generator_tape.gradient(perceptual_loss, self.generator.trainable_variables)
+                discriminator_gradients = discriminator_tape.gradient(discriminator_loss,
+                                                                      self.discriminator.trainable_variables)
+                self.generator_optimizer.apply_gradients(zip(generator_gradients, self.generator.trainable_variables))
+                self.discriminator_optimizer.apply_gradients(
+                    zip(discriminator_gradients, self.discriminator.trainable_variables))
+        self.save_model_weights()
+        return perceptual_loss, discriminator_loss
+
+    def save_model_weights(self):
+        output_dir = os.path.join("model_ckpts", "srgan")
+        output_path = os.path.join(output_dir, "srgan")
+        os.makedirs("model_ckpts", exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
+        self.discriminator.save_weights(output_path)
+        logger.info("SRGAN Model is saved")
 
 
 # def test():
@@ -58,5 +91,4 @@ class SRGAN:
 
 if __name__ == "__main__":
     srgan = SRGAN()
-    normal_lr, normal_hr = srgan.preprocess()
-    g_loss, d_loss = srgan.train(normal_lr[:32], normal_hr[:32])
+    perceptual_loss, discriminator_loss = srgan.train()

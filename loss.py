@@ -1,25 +1,43 @@
 from keras import backend
 from keras.applications.vgg19 import VGG19
 from keras.losses import mean_squared_error as mse
+from tensorflow.keras.losses import BinaryCrossentropy
+from tensorflow.keras.losses import MeanSquaredError
+from tensorflow.keras.models import Model
+from tensorflow.keras.applications.vgg19 import preprocess_input
+import tensorflow as tf
+from tensorflow import keras
+from config import Config as conf
 
-# Discriminator Loss
+
 class Loss:
+    def __init__(self):
+        vgg = VGG19(input_shape=(None, None, 3), include_top=False)
+        self.vgg = Model(inputs=vgg.input, outputs=vgg.layers[20].output)
+        self.mse = MeanSquaredError()
+        self.bce = BinaryCrossentropy()
+        self.learning_rate = conf.learning_rate
 
-	def discriminator_loss(logits_fake: tf.Tensor, logits_real: tf.Tensor) -> tf.Tensor:
-		D_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.zeros_like(logits_fake), logits=logits_fake))
-		D_loss += tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(logits_real), logits=logits_real))
-		return D_loss
+    def content_loss(self, real, fake):
+        """
+        Calculates the content loss using vgg19 with imagenet weights
+        """
+        return self.mse((self.vgg(preprocess_input(real)) / 12.75), (self.vgg(preprocess_input(fake)) / 12.75))
 
-	  # Generator Loss
-	def generator_loss(fake_imgs: tf.Tensor, real_imgs: tf.Tensor,logits_fake: tf.Tensor, logits_real: tf.Tensor,i=5,j=4) -> tf.Tensor:
-		model = VGG19(weights='imagenet')
-		model = backend.function([model.layers[0].input], [model.layers[i*j].output])
-		vgg_input_features = model(real_imgs)[0]
-		vgg_target_features = model(fake_imgs)[0]
+    def generator_loss(self, fake):
+        """
+        Calculates the binary cross entropy of the generator model
+        """
+        return self.bce(tf.ones_like(fake), fake)
 
-		content_loss = mse(vgg_input_features,vgg_target_features)
-		adversarial_loss = 1e-3 * tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(logits_fake), logits=logits_fake))
-		feature_dim = vgg_input_features.shape[1]*vgg_input_features.shape[2]
-		perceptual_loss = (1/feature_dim)*content_loss + adversarial_loss
+    def discriminator_loss(self, real, fake):
+        """
+        Calculates the discriminator loss of the generator model
+        """
+        return self.bce(tf.ones_like(real), real) + self.bce(tf.zeros_like(fake), fake)
 
-		return perceptual_loss
+    def perceptual_loss(self, content_loss, generator_loss):
+        """
+        Calculates the perceptual loss
+        """
+        return content_loss + self.learning_rate * generator_loss

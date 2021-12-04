@@ -9,11 +9,10 @@ from tensorflow.keras.losses import mean_squared_error as mse
 
 
 class Generator:
-    def __init__(self, input_shape, model, phi_i, phi_j):
+    def __init__(self, input_shape):
         self.input_shape = input_shape
         self.number_of_residual_blocks = 16
-        self.model = backend.function([model.layers[0].input], [model.layers[phi_i * phi_j].output])
-
+        # self.model = backend.function([model.layers[0].input], [model.layers[phi_i * phi_j].output])
 
     def SubpixelConv2D(self, scale):
         return Lambda(lambda x: tf.nn.depth_to_space(x, scale))
@@ -51,22 +50,21 @@ class Generator:
         for upsample_block in range(1):
             upsample_layer = self.build_upsampling_block(upsample_layer)
         final_output = Conv2D(3, kernel_size=9, strides=1, padding='same', activation='tanh')(upsample_layer)
-        print("generator_complete")
         return Model(input_image, final_output)
 
-    def loss_function(self, fake_imgs: tf.Tensor, real_imgs: tf.Tensor, logits_fake: tf.Tensor, logits_real: tf.Tensor) -> tf.Tensor:
-
-        # converting real an fake images to a (224,224) VGG acceptable shape with values in range [0,255] mapped from [0,1]
-        real_imgs = preprocess_input((real_imgs + 1) * 127.5)
-        fake_imgs = preprocess_input(tf.add(fake_imgs, 1) * 127.5)
-
-        vgg_input_features = self.model(real_imgs)[0]
-        vgg_target_features = self.model(fake_imgs)[0]
-
-        content_loss = tf.reduce_sum(mse(vgg_input_features, vgg_target_features))
-        adversarial_loss = 1e-3 * tf.reduce_mean(
-            tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(logits_fake), logits=logits_fake))
-        feature_dim = vgg_input_features.shape[1] * vgg_input_features.shape[2]
-        perceptual_loss = conf.rescaling_factor * ((1 / feature_dim) * content_loss + adversarial_loss)
-
-        return perceptual_loss
+    # def loss_function(self, fake_imgs: tf.Tensor, real_imgs: tf.Tensor, logits_fake: tf.Tensor, logits_real: tf.Tensor) -> tf.Tensor:
+    #
+    #     # converting real an fake images to a (224,224) VGG acceptable shape with values in range [0,255] mapped from [0,1]
+    #     real_imgs = preprocess_input((real_imgs + 1) * 127.5)
+    #     fake_imgs = preprocess_input(tf.add(fake_imgs, 1) * 127.5)
+    #
+    #     vgg_input_features = self.model(real_imgs)[0]
+    #     vgg_target_features = self.model(fake_imgs)[0]
+    #
+    #     content_loss = tf.reduce_sum(mse(vgg_input_features, vgg_target_features))
+    #     adversarial_loss = 1e-3 * tf.reduce_mean(
+    #         tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(logits_fake), logits=logits_fake))
+    #     feature_dim = vgg_input_features.shape[1] * vgg_input_features.shape[2]
+    #     perceptual_loss = conf.rescaling_factor * ((1 / feature_dim) * content_loss + adversarial_loss)
+    #
+    #     return perceptual_loss
