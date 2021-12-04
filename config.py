@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+from tensorflow.keras.optimizers.schedules import PiecewiseConstantDecay
 
 class Config:
     #data_dir = '/Users/rugvedmavidipalli/Downloads/archive/pokemon_jpg/'
@@ -17,4 +17,4 @@ class Config:
     input_shape = (image_height, image_width, num_channels)
     input_shape_lr = (image_height // scale, image_width // scale, num_channels)
     input_shape_hr = (image_height, image_width, num_channels)
-    optimizer = tf.keras.optimizers.Adam(learning_rate, 0.9)
+    optimizer = tf.keras.optimizers.Adam(PiecewiseConstantDecay(boundaries=[100000], values=[1e-4, 1e-5]))
