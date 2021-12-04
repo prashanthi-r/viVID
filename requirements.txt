@@ -29,8 +29,6 @@ google-auth==2.3.3
 google-auth-oauthlib==0.4.6
 google-pasta==0.2.0
 grpcio==1.42.0
-# Editable install with no version control (gym==0.10.5)
--e /Users/rugvedmavidipalli/Desktop/classes/Artificial Inteligence/venv/lib/python3.9/site-packages
 h5py==3.6.0
 idna==3.2
 imageio==2.10.1
