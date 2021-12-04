@@ -4,10 +4,12 @@ from tensorflow.keras.optimizers.schedules import PiecewiseConstantDecay
 class Config:
     #data_dir = '/Users/rugvedmavidipalli/Downloads/archive/pokemon_jpg/'
     # for data dir now you have to give the full path where images are so for pokemon: pokemon_jpg/pokemon_jpg
-    data_dir = '/Users/rugvedmavidipalli/Downloads/DIV2K_train_HR/'
-    epochs = 1
+    data_dir = '/home/rmavidip/Desktop/classes/dl/datasets/DIV2K_train_HR/'
+    epochs = 4000
     scale = 4
     batch_size = 16
+    # This is now being used only for perceptual loss
+    # Check loss loss.py
     learning_rate = 1e-3
     beta = 0.9
     rescaling_factor = 0.006
