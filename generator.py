@@ -32,7 +32,7 @@ class Generator:
         """
         This is the upsampling block
         """
-        output = Conv2D(filters=256, kernel_size=3, padding='same')(upsampling_input)
+        output = Conv2D(filters=96, kernel_size=3, padding='same')(upsampling_input)
         output = self.SubpixelConv2D(2)(output)
         return PReLU()(output)
 
