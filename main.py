@@ -17,6 +17,7 @@ from tensorflow.keras.losses import BinaryCrossentropy
 from tensorflow.keras.losses import MeanSquaredError
 from loss import Loss
 import os
+import datetime
 from tensorflow.keras.applications.vgg19 import preprocess_input
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -50,7 +51,7 @@ class SRGAN:
     def preprocess(self):
         return get_data_clip(self.dataset_directory, self.scalling_factor, patch_size =96, seed=5, patches_count=2, gray_scale = False)
 
-    def show_images(self, images, fig_name , res):
+    def show_images(self, images, fig_name , res, epoch, loc):
         if res == 'high':
             #-1 to 1
             images = ((np.array(images) + 1) * 127.5).astype(np.uint8)
@@ -73,6 +74,7 @@ class SRGAN:
             ax.set_aspect('equal')
             plt.imshow(img)
             plt.title(fig_name)
+        plt.savefig(loc+'/'+str(fig_name+epoch)+'.png')
         return
 
     def train(self):
@@ -89,7 +91,14 @@ class SRGAN:
                     mse_loss = self.mse(generated_samples, high_res_batch)
                 grad = tape.gradient(mse_loss, self.generator.trainable_weights)
                 self.generator_optimizer.apply_gradients(zip(grad, self.generator.trainable_weights))'''
+        import os
+        
+        today = datetime.datetime.now()
+        date_time = today.strftime("%m_%d_%Y_%H_%M_%S")
+        folder_loc = 'output'+ date_time
 
+        if not os.path.exists(folder_loc):
+            os.makedirs(folder_loc)
 
         logger.info(f"{'---' * 30} STARTING TRAINING {'---' * 30}")
         for epoch in range(0, self.epochs):
@@ -121,6 +130,20 @@ class SRGAN:
 
             if epoch%50==0:
                 self.save_model_weights(epoch)
+            
+            if epoch%10==0:
+                if conf.GCP:
+                    self.show_images(high_res_batch[:3], 'input highres img', 'high', epoch, folder_loc)
+                    self.show_images(low_res_batch[:3], 'input lowres img', 'low', epoch, folder_loc)
+                    self.show_images(generated_samples[:3], 'generated img', 'high', epoch, folder_loc)
+                else:
+                    self.show_images(high_res_batch[:3], 'input highres img', 'high', epoch, folder_loc)
+                    plt.show()
+                    self.show_images(low_res_batch[:3], 'input lowres img', 'low', epoch, folder_loc)
+                    plt.show()
+                    self.show_images(generated_samples[:3], 'generated img', 'high', epoch, folder_loc) 
+                    plt.show()
+                
 
         return perceptual_loss, discriminator_loss
 
