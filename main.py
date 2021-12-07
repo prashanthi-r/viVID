@@ -119,15 +119,6 @@ class SRGAN:
                 self.discriminator_optimizer.apply_gradients(
                     zip(discriminator_gradients, self.discriminator.trainable_variables))
 
-            if epoch%10==0:
-                self.show_images(high_res_batch[:3],'input highres img','high')
-                plt.show()
-                self.show_images(low_res_batch[:3],'input lowres img','low')
-                plt.show()
-                self.show_images(generated_samples[:3],'generated img','high')
-                plt.show()
-                self.save_model_weights(epoch)
-
         return perceptual_loss, discriminator_loss
 
     def save_model_weights(self,epoch):
@@ -160,3 +151,13 @@ if __name__ == "__main__":
     #srgan.generate_output()
     perceptual_loss, discriminator_loss = srgan.train()
 
+
+# Visualization Snippet
+# if epoch%10==0:
+#     self.show_images(high_res_batch[:3],'input highres img','high')
+#     plt.show()
+#     self.show_images(low_res_batch[:3],'input lowres img','low')
+#     plt.show()
+#     self.show_images(generated_samples[:3],'generated img','high')
+#     plt.show()
+#     self.save_model_weights(epoch)
