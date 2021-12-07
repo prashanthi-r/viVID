@@ -119,6 +119,9 @@ class SRGAN:
                 self.discriminator_optimizer.apply_gradients(
                     zip(discriminator_gradients, self.discriminator.trainable_variables))
 
+            if epoch%50==0:
+                self.save_model_weights(epoch)
+
         return perceptual_loss, discriminator_loss
 
     def save_model_weights(self,epoch):
