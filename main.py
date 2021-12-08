@@ -74,7 +74,7 @@ class SRGAN:
             ax.set_aspect('equal')
             plt.imshow(img)
             plt.title(fig_name)
-        plt.savefig(loc+'/'+str(fig_name+epoch)+'.png')
+        plt.savefig(loc+'/'+fig_name+str(epoch)+'.png')
         return
 
     def train(self):
