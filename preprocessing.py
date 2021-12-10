@@ -11,7 +11,9 @@ from sklearn.feature_extraction import image
 from math import log10, sqrt
 import os
 import cv2
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 
 def eval(original, compressed):
     """
@@ -24,7 +26,7 @@ def eval(original, compressed):
     Returns:
         mse: mean square error
         psnr: peak signal to noise ratio
-    """ 
+    """
     mse = np.mean((original - compressed) ** 2)
     if (mse == 0):  # MSE is zero means no noise is present in the signal .
         # Therefore PSNR have no importance.
@@ -32,6 +34,7 @@ def eval(original, compressed):
     max_pixel = 255.0
     psnr = 20 * log10(max_pixel / sqrt(mse))
     return mse, psnr
+
 
 # def show_images(images, fig_name , res, epoch, loc):
 #     if res == 'high':
@@ -69,6 +72,7 @@ def load_image(path):
     '''
     return io.imread(path)
 
+
 def save_image(path, im):
     '''
     This function saves an input image
@@ -77,6 +81,7 @@ def save_image(path, im):
         im (numpy array): image to be saved
     '''
     return io.imsave(path, img_as_ubyte(im.copy()))
+
 
 def get_data(data_dir, scale):
     '''
@@ -126,7 +131,8 @@ def get_data(data_dir, scale):
     print(f"\n{'---' * 10} PREPROCESSING COMPLETED {'---' * 10}")
     return np.array(normal_lr_images), np.array(normal_hr_images)
 
-def get_data_clip(data_dir, scale, patch_size =96, seed=5, patches_count=1, gray_scale = False):
+
+def get_data_clip(data_dir, scale, patch_size=96, seed=5, patches_count=1, gray_scale=False):
     '''
     This function loads the images from the data directory and selects patches_count number of random patches of 
     size (patch_size x patch_size) from the images and returns normalsied low res and high res images
@@ -164,8 +170,9 @@ def get_data_clip(data_dir, scale, patch_size =96, seed=5, patches_count=1, gray
         f"| high_res_h: {high_res_h} | \n| high_res_w: {high_res_w} | \n| low_res_h: {low_res_h} | \n| low_res_w :{low_res_w} |\n")
     count = 0
     for i in img_list[:]:
-        
-        patches = image.extract_patches_2d(load_image(i), (patch_size, patch_size), max_patches=patches_count,random_state=seed)
+
+        patches = image.extract_patches_2d(load_image(i), (patch_size, patch_size), max_patches=patches_count,
+                                           random_state=seed)
         for j in patches:
             img_lr = resize(j, (low_res_h, low_res_w), preserve_range=True)
             normalization_layer_hr = tf.keras.layers.experimental.preprocessing.Rescaling(1. / 127.5, offset=-1)
@@ -181,32 +188,34 @@ def get_data_clip(data_dir, scale, patch_size =96, seed=5, patches_count=1, gray
     print(f"\n{'---' * 10} PREPROCESSING COMPLETED {'---' * 10}")
     return np.array(normal_lr_images), np.array(normal_hr_images)
 
+
 # how to call:
 # def preprocess(self):
 #         return get_data_clip(self.dataset_directory, self.scalling_factor, patch_size =96, seed=5, patches_count=3, gray_scale = False)
 
 
-def reconstruct(blocks, block_size, inp_img_w = 1356, inp_img_h = 2040):
+def reconstruct(blocks, block_size, inp_img_w=1356, inp_img_h=2040):
     '''
     This function reconstructs the image from patches. Works inverse of deconstruct.
     Args:
-        blocks(numpy array): (no of blocks, h,w,c) blocks os iamges 
+        blocks(numpy array): (no of blocks, h,w,c) blocks os iamges
         block size(int): size of the blocks
         inp_img_w(int): width of output image
         inp_img_h(int): height of output image
     Returns:
         image_recons(numpy ndarray): constructed input images
     '''
-    rows = np.array(np.split(blocks[:,:,:,],inp_img_w/block_size,axis = 0))
-    cols = np.array([np.hstack((rows[x,:,:,:,:])) for x in range(rows.shape[0])])
-    image_recons = np.array([np.vstack((cols[:,:,:,:])) for x in range(cols.shape[0])])[0]
+    rows = np.array(np.split(blocks[:, :, :, ], inp_img_w / block_size, axis=0))
+    cols = np.array([np.hstack((rows[x, :, :, :, :])) for x in range(rows.shape[0])])
+    image_recons = np.array([np.vstack((cols[:, :, :, :])) for x in range(cols.shape[0])])[0]
     return image_recons
+
 
 def deconstruct(image, patch_size):
     '''
     This function converts the image into smaller patches. Works inverse of reconstruct.
     Args:
-        image(numpy array): image 
+        image(numpy array): image
         patch_size(int): size of the blocks
     Returns:
         blocks(numpy ndarray): [number of blocks, block_width, block_height, channel]
@@ -214,22 +223,23 @@ def deconstruct(image, patch_size):
         w: weight of the cropped image
         c: channel of the cropped image
     '''
-    h,w,c = image.shape
-    h = (h//patch_size)*patch_size
-    w = (w//patch_size)*patch_size
-    image = image[:h,:w,:]
-    blocks = np.array([image[i:i+patch_size, j:j+patch_size]  for i in range(0,h,patch_size) for j in range(0,w,patch_size) ])
+    h, w, c = image.shape
+    h = (h // patch_size) * patch_size
+    w = (w // patch_size) * patch_size
+    image = image[:h, :w, :]
+    blocks = np.array(
+        [image[i:i + patch_size, j:j + patch_size] for i in range(0, h, patch_size) for j in range(0, w, patch_size)])
     return blocks, h, w, c
 
 
-def test_video(generator, data_dir, scale, patch_size ):
+def test_video(generator, data_dir, scale, patch_size):
     '''
     This function runs SRGAN- on a video file, it takes the input feed video from teh web cam,
     reduces the resolution of the frame, breaks it into patches and passes it though SRGAN to get
-    high resolution patches. It then merges the patches into one image, and merges the frames 
+    high resolution patches. It then merges the patches into one image, and merges the frames
     back into output video.
     Args:
-        generator(tensorflow model): generator model 
+        generator(tensorflow model): generator model
         scale(int): factor to downscale low resolution image
         patch_size(int): patch size
     '''
@@ -240,12 +250,12 @@ def test_video(generator, data_dir, scale, patch_size ):
 
     low_res_h = high_res_h // scale
     low_res_w = high_res_w // scale
-  
-    while(True):
+
+    while (True):
         normal_lr_images = []
         ret, frame = vid.read()
-        frame = cv2.resize(frame,(96*7,96*5))
-        blocks,h,w,c = deconstruct(frame, patch_size)
+        frame = cv2.resize(frame, (96 * 7, 96 * 5))
+        blocks, h, w, c = deconstruct(frame, patch_size)
         for j in blocks:
             img_lr = resize(j, (low_res_h, low_res_w), preserve_range=True)
             normalization_layer_lr = tf.keras.layers.experimental.preprocessing.Rescaling(1. / 255)
@@ -253,10 +263,10 @@ def test_video(generator, data_dir, scale, patch_size ):
             normal_lr_images.append(normal_img_lr)
         normal_lr_images_gen = np.array(normal_lr_images)
         generated_samples = generator(normal_lr_images_gen, training=True)
-        generated_samples = np.array([((np.array(x) + 1) * 127.5).astype(np.uint8) for x in generated_samples])        
-        recon_img = reconstruct(generated_samples, patch_size, h,w)
-        recon_img = cv2.blur(recon_img,(4,4))
-        inp_img = reconstruct(np.array(normal_lr_images), patch_size/scale, h/scale,w)
+        generated_samples = np.array([((np.array(x) + 1) * 127.5).astype(np.uint8) for x in generated_samples])
+        recon_img = reconstruct(generated_samples, patch_size, h, w)
+        recon_img = cv2.blur(recon_img, (4, 4))
+        inp_img = reconstruct(np.array(normal_lr_images), patch_size / scale, h / scale, w)
         inp_img = resize(inp_img, (recon_img.shape), preserve_range=True)
         cv2.imshow('output hr', recon_img)
         cv2.imshow('input lr', inp_img)
@@ -265,9 +275,8 @@ def test_video(generator, data_dir, scale, patch_size ):
     vid.release()
     cv2.destroyAllWindows()
 
-    
 
-def test_preprocessing(generator, data_dir, scale, patch_size ):
+def test_preprocessing(generator, data_dir, scale, patch_size):
     '''
     This function runs SRGAN- on an image file, it takes the input iamge, reduces the resolution of the image, 
     breaks it into patches and passes it though SRGAN to get high resolution patches. 
@@ -281,7 +290,7 @@ def test_preprocessing(generator, data_dir, scale, patch_size ):
     print(f"{'---' * 10} PREPROCESSING STARTED {'---' * 10}")
     normal_lr_images = []
     op_images = []
-    in_images=[]
+    in_images = []
     data_dir = pathlib.Path(data_dir)
     img_list = list(data_dir.glob('*.jpg'))
     if len(img_list) <= 0:
@@ -297,7 +306,7 @@ def test_preprocessing(generator, data_dir, scale, patch_size ):
         f"| high_res_h: {high_res_h} | \n| high_res_w: {high_res_w} | \n| low_res_h: {low_res_h} | \n| low_res_w :{low_res_w} |\n")
     count = 0
     for i in img_list[:]:
-        blocks,h,w,c = deconstruct(load_image(i), patch_size)
+        blocks, h, w, c = deconstruct(load_image(i), patch_size)
         for j in blocks:
             img_lr = resize(j, (low_res_h, low_res_w), preserve_range=True)
             normalization_layer_lr = tf.keras.layers.experimental.preprocessing.Rescaling(1. / 255)
@@ -306,8 +315,8 @@ def test_preprocessing(generator, data_dir, scale, patch_size ):
         normal_lr_images = np.array(normal_lr_images)
         generated_samples = generator(normal_lr_images, training=True)
         generated_samples = np.array([((np.array(x) + 1) * 127.5).astype(np.uint8) for x in generated_samples])
-        recon_img = reconstruct(generated_samples, patch_size, h,w)
-        inp_img = reconstruct(normal_lr_images, patch_size/scale, h/scale,w)
+        recon_img = reconstruct(generated_samples, patch_size, h, w)
+        inp_img = reconstruct(normal_lr_images, patch_size / scale, h / scale, w)
         inp_img = resize(inp_img, (recon_img.shape), preserve_range=True)
         op_images.append(recon_img)
         in_images.append(inp_img)

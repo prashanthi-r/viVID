@@ -1,5 +1,5 @@
 from discriminator import Discriminator
-from preprocessing import get_data_clip,test_preprocessing, test_video
+from preprocessing import get_data_clip, test_preprocessing, test_video
 from generator import Generator
 from tensorflow.keras import Input
 import numpy as np
@@ -15,6 +15,7 @@ import os
 import datetime
 from tensorflow.keras.applications.vgg19 import preprocess_input
 import json
+from config import Config as conf
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -40,7 +41,7 @@ class SRGAN:
         self.discriminator_optimizer = conf.optimizer
         generator = Generator(input_shape=self.input_shape_lr)
         self.generator = generator.build_generator()
-        if self.pretrain_generator:
+        if self.pretrain_generator or conf.prediction:
             self.generator.load_weights(conf.generator_weights_path)
         discriminator = Discriminator(self.input_shape)
         self.discriminator = discriminator.build_discriminator()
@@ -51,12 +52,12 @@ class SRGAN:
 
     def preprocess(self):
         """
-        The images are preprocessed to be used in the model. 
+        The images are preprocessed to be used in the model.
 
         Returns:
             np.array : The low resolution images and high resolution images
         """
-        return get_data_clip(self.dataset_directory, self.scalling_factor, patch_size=96, seed=7, patches_count=8,
+        return get_data_clip(self.dataset_directory, self.scalling_factor, patch_size=96, seed=7, patches_count=1,
                              gray_scale=False)
 
     def show_images(self, images, fig_name, res, epoch, loc):
@@ -105,7 +106,7 @@ class SRGAN:
             for epoch in range(self.pretrain_number_of_epochs):
                 for batch in range(0, len(self.high_resolution_images), self.batch_size):
                     low_res_batch = self.low_resolution_images[batch:batch +
-                                                               self.batch_size]
+                                                                     self.batch_size]
                     high_res_batch = self.high_resolution_images[batch:batch + self.batch_size]
                     with tf.GradientTape() as tape:
                         generated_samples = self.generator(
@@ -130,7 +131,7 @@ class SRGAN:
             number_of_batches = 0
             for batch in range(0, len(self.high_resolution_images), self.batch_size):
                 low_res_batch = self.low_resolution_images[batch:batch +
-                                                           self.batch_size]
+                                                                 self.batch_size]
                 high_res_batch = self.high_resolution_images[batch:batch + self.batch_size]
                 with tf.GradientTape() as generator_tape, tf.GradientTape() as discriminator_tape:
                     generated_samples = self.generator(
@@ -205,37 +206,38 @@ class SRGAN:
         with open('logs.json', 'w+') as f:
             json.dump(data, f)
         f.close()
-    
+
     def pred_pipeline(self):
         '''
         This function initialised the generator, loads the weights and call test_preprocessing
         to run the generator on sample test images.
         '''
-        generator = Generator(input_shape=self.input_shape_lr)  
-        generator = generator.build_generator()      
-        generator.load_weights("gen1740.h5")
-        recon_iamge, lr_recon_iamge = test_preprocessing(generator, '../test_images/', conf.scale, conf.image_height)        
-        print('recon_iamge shape',recon_iamge.shape)
-        self.show_images(recon_iamge,'Output High Resolution Image','F',16,'../output/')
+        generator = Generator(input_shape=self.input_shape_lr)
+        generator = generator.build_generator()
+        generator.load_weights(conf.generator_weights_path)
+        recon_iamge, lr_recon_iamge = test_preprocessing(generator, conf.test_path, conf.scale, conf.image_height)
+        print('recon_iamge shape', recon_iamge.shape)
+        self.show_images(recon_iamge, 'Output High Resolution Image', 'F', 16, conf.test_output_path)
         plt.show()
-        self.show_images(lr_recon_iamge,'Input Low Resolution Image','low',16,'../output/')
+        self.show_images(lr_recon_iamge, 'Input Low Resolution Image', 'low', 16, conf.test_output_path)
         plt.show()
-        
-    
+
     def pred_pipeline_video(self):
         '''
         This function initialised the generator, loads the weights and call test_video function
         to run the generator on sample videos.
         '''
-        generator = Generator(input_shape=self.input_shape_lr)  
-        generator = generator.build_generator()      
-        generator.load_weights("gen1740.h5")
-        test_video(generator, '../test_images/', conf.scale, conf.image_height)        
-    
+        generator = Generator(input_shape=self.input_shape_lr)
+        generator = generator.build_generator()
+        generator.load_weights(conf.generator_weights_path)
+        test_video(generator, conf.test_path, conf.scale, conf.image_height)
+
 
 if __name__ == "__main__":
     srgan = SRGAN()
-    srgan.train()
-    # srgan.pred_pipeline()
-    # srgan.pred_pipeline_video()
-    # srgan.generate_output()
+    if conf.prediction:
+        srgan.pred_pipeline()
+        srgan.pred_pipeline_video()
+        srgan.generate_output()
+    else:
+        srgan.train()
