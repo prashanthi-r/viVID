@@ -1,5 +1,5 @@
 from config import Config as conf
-from preprocessing import get_data_clip
+from preprocessing import get_data_clip,test_preprocessing, test_video
 from discriminator import Discriminator
 from generator import Generator
 from tensorflow.keras import Input
@@ -32,7 +32,7 @@ class SRGAN:
         self.dataset = ""
         self.dataset_directory = conf.data_dir
         self.scalling_factor = conf.scale
-        self.low_resolution_images, self.high_resolution_images = self.preprocess()
+        #self.low_resolution_images, self.high_resolution_images = self.preprocess()
         self.input_shape = conf.input_shape
         self.input_shape_lr = conf.input_shape_lr
         self.batch_size = conf.batch_size
@@ -55,9 +55,10 @@ class SRGAN:
         if res == 'high':
             #-1 to 1
             images = ((np.array(images) + 1) * 127.5).astype(np.uint8)
-        else:
+        elif res == 'low':
             # 0 to 1
             images = (np.array(images)*255).astype(np.uint8)
+    
 
         images =  np.array(images)
         print(f"fig {fig_name}\nimg min:{min(np.reshape(images[0],[-1]))} max:{max(np.reshape(images[0],[-1]))}")
@@ -73,7 +74,7 @@ class SRGAN:
             ax.set_yticklabels([])
             ax.set_aspect('equal')
             plt.imshow(img)
-            plt.title(fig_name)
+        plt.title(fig_name)
         plt.savefig(loc+'/'+fig_name+str(epoch)+'.png')
         return
 
@@ -166,6 +167,33 @@ class SRGAN:
         self.show_images(generated_ouput,'generated img','high')
         plt.show()
 
+    def pred_pipeline(self):
+
+        generator = Generator(input_shape=self.input_shape_lr)  
+        generator = generator.build_generator()      
+        generator.load_weights("gen1740.h5")
+        recon_iamge, lr_recon_iamge = test_preprocessing(generator, '../test_images/', conf.scale, conf.image_height)        
+        print('recon_iamge shape',recon_iamge.shape)
+        self.show_images(recon_iamge,'Output High Resolution Image','F',16,'../output/')
+        plt.show()
+        self.show_images(lr_recon_iamge,'Input Low Resolution Image','low',16,'../output/')
+        plt.show()
+        
+        # print(f"lr_recon_iamge:{lr_recon_iamge.shape}\n Output_result:{recon_iamge.shape}")
+        # generated_ouput = model(self.low_resolution_images)
+        # self.show_images(generated_ouput,'generated img','high')
+        # plt.show()
+    def pred_pipeline_video(self):
+
+        generator = Generator(input_shape=self.input_shape_lr)  
+        generator = generator.build_generator()      
+        generator.load_weights("gen1740.h5")
+        recon_iamge, lr_recon_iamge = test_video(generator, '../test_images/', conf.scale, conf.image_height)        
+        # print('recon_iamge shape',recon_iamge.shape)
+        # self.show_images(recon_iamge,'Output High Resolution Image','F',16,'../output/')
+        # plt.show()
+        # self.show_images(lr_recon_iamge,'Input Low Resolution Image','low',16,'../output/')
+        # plt.show()
 
 # def test():
 
@@ -174,9 +202,11 @@ class SRGAN:
 
 if __name__ == "__main__":
     srgan = SRGAN()
+    # srgan.pred_pipeline()
+    srgan.pred_pipeline_video()
     #srgan.generate_output()
-    perceptual_loss, discriminator_loss = srgan.train()
-
+    #perceptual_loss, discriminator_loss = srgan.train()
+    
 
 # Visualization Snippet
 # if epoch%10==0:
