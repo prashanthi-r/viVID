@@ -1,4 +1,5 @@
 from discriminator import Discriminator
+from preprocessing import get_data_clip,test_preprocessing, test_video
 from generator import Generator
 from tensorflow.keras import Input
 import numpy as np
@@ -204,6 +205,40 @@ class SRGAN:
         with open('logs.json', 'w+') as f:
             json.dump(data, f)
         f.close()
+    
+    def pred_pipeline(self):
+        '''
+        This function initialised the generator, loads the weights and call test_preprocessing
+        to run the generator on sample test images.
+        '''
+        generator = Generator(input_shape=self.input_shape_lr)  
+        generator = generator.build_generator()      
+        generator.load_weights("gen1740.h5")
+        recon_iamge, lr_recon_iamge = test_preprocessing(generator, '../test_images/', conf.scale, conf.image_height)        
+        print('recon_iamge shape',recon_iamge.shape)
+        self.show_images(recon_iamge,'Output High Resolution Image','F',16,'../output/')
+        plt.show()
+        self.show_images(lr_recon_iamge,'Input Low Resolution Image','low',16,'../output/')
+        plt.show()
+        
+    
+    def pred_pipeline_video(self):
+        '''
+        This function initialised the generator, loads the weights and call test_video function
+        to run the generator on sample videos.
+        '''
+        generator = Generator(input_shape=self.input_shape_lr)  
+        generator = generator.build_generator()      
+        generator.load_weights("gen1740.h5")
+        test_video(generator, '../test_images/', conf.scale, conf.image_height)        
+    
+
+if __name__ == "__main__":
+    srgan = SRGAN()
+    srgan.pred_pipeline()
+    srgan.pred_pipeline_video()
+    srgan.generate_output()
+    perceptual_loss, discriminator_loss = srgan.train()
 
 
 if __name__ == "__main__":
