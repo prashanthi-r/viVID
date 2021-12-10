@@ -13,55 +13,59 @@ from config import Config as conf
 
 
 class Loss:
+    """
+    Contains the loss functions for the generator and discriminator
+    """    
     def __init__(self):
+        """
+        The constructor of the Loss class
+        """        
         vgg = VGG19(input_shape=(None, None, 3), include_top=False, weights='imagenet')
-        self.vgg1 = Model(inputs=vgg.input, outputs=vgg.layers[5].output)
-        self.vgg2 = Model(inputs=vgg.input, outputs=vgg.layers[10].output)
-        self.vgg3 = Model(inputs=vgg.input, outputs=vgg.layers[15].output)
-        #self.vgg4 = Model(inputs=vgg.input, outputs=vgg.layers[20].output)
+        self.vgg1 = Model(inputs=vgg.input, outputs=vgg.layers[9].output)
         self.mse = MeanSquaredError()
         self.bce = BinaryCrossentropy()
-        self.learning_rate = conf.learning_rate
 
     def content_loss(self, real, fake):
         """
         Calculates the content loss using vgg19 with imagenet weights
-        """
 
-        self.vgg1.trainable = False
-        self.vgg2.trainable = False
-        self.vgg3.trainable = False
-        vgg_models = [self.vgg1,self.vgg2,self.vgg3]
+        Args:
+            real (tf.tensor): real images for the batch (high resolution images)
+            fake (tf.tensor): generated images from the generator model
+
+        Returns:
+            [type]: [description]
+        """        
+        vgg_models = [self.vgg1]
         vgg_loss = 0
 
         for mod in vgg_models:
             vgg_loss+= K.mean(K.square(mod(fake) - mod(real)))
 
-        return  vgg_loss/3
-
-    def generator_loss(self, fake):
-        """
-        Calculates the binary cross entropy of the generator model
-        """
-        return self.bce(tf.ones_like(fake), fake)
+        return  vgg_loss
 
     def discriminator_loss(self, real, fake):
         """
         Calculates the discriminator loss of the generator model
-        """
+
+        Args:
+            real (tf.tensor): real images for the batch (high resolution images)
+            fake (tf.tensor): generated images from the generator model
+
+        Returns:
+            [type]: [description]
+        """        
         return self.bce(tf.ones_like(real), real) + self.bce(tf.zeros_like(fake), fake)
 
-    def perceptual_loss(self, content_loss, generator_loss):
+    def perceptual_loss(self, content_loss, fake):
         """
         Calculates the perceptual loss
-        """
-        return content_loss + self.learning_rate * generator_loss
 
+        Args:
+            content_loss (tf.tensor): content loss calculated using vgg19 
+            generator_loss (tf.tensor): binary cross entropy of the generator model
 
-
-
-# TEST CODE
-#real = ((np.array(real) + 1) * 127.5).astype(np.uint8)
-#fake = (np.array(fake)*255).astype(np.uint8)
-#print(self.mse((self.vgg(real)), (self.vgg(fake))))
-#return self.mse((self.vgg(real))/12.75, (self.vgg(fake))/12,.75)
+        Returns:
+            perceptual loss (tf.tensor): the sum of the content loss and the binary cross entropy of the generator model * 1e-2
+        """        
+        return content_loss + 1e-3 * self.bce(tf.ones_like(fake), fake)
