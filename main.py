@@ -238,7 +238,7 @@ if __name__ == "__main__":
     srgan.pred_pipeline()
     srgan.pred_pipeline_video()
     srgan.generate_output()
-    perceptual_loss, discriminator_loss = srgan.train()
+    srgan.train()
 
 
 if __name__ == "__main__":
