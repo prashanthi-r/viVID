@@ -235,14 +235,7 @@ class SRGAN:
 
 if __name__ == "__main__":
     srgan = SRGAN()
-    srgan.pred_pipeline()
-    srgan.pred_pipeline_video()
-    srgan.generate_output()
     srgan.train()
-
-
-if __name__ == "__main__":
-    # Create the SRGAN model
-    srgan = SRGAN()
-    # Train the SRGAN model
-    srgan.train()
+    # srgan.pred_pipeline()
+    # srgan.pred_pipeline_video()
+    # srgan.generate_output()
